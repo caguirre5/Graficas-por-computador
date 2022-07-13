@@ -22,29 +22,49 @@ def color(b, g, r):
 
 
 class Renderer(object):
-    def __init__(self, width, height):
+    def __init__(self, width, height): 
         self.width = width
         self.height = height
 
         self.clearColor = color(0, 0, 0)
         self.currColor = color(1, 1, 1)
 
+        self.glViewport(0,0,self.width, self.height)
+
         self.glClear()
 
-    def glClear(self):         #List comprehension: Asigna color a cada posicion
+    def glViewport(self, posX, posY, width, height):
+        self.vpX = posX
+        self.vpY = posY
+        self.vpW = width
+        self.vpH = height
+
+    def glClear(self):         #List comprehension: Asigna color a cada posicion 20pts
         self.pixels = [[self.clearColor for y in range(self.height)] for x in range(self.width)]
 
-    def glClearColor(self, r, g, b):
+    def glClearColor(self, r, g, b): 
         self.clearColor = color(r,g,b)
 
-    def glColor(self, r, g, b):
+    def glClearViewport(self, clr = None):
+        for x in range(self.vpX, self.vpX + self.vpW):
+            for y in range(self.vpY, self.vpY + self.vpH):
+                self.glPoint(x,y,clr)
+
+    def glColor(self, r, g, b): 
         self.currColor = color(r,g,b)
 
-    def glPoint(self, x, y, clr=None):
+    def glPoint(self, x, y, clr=None): 
         if (0 <= x < self.width) and (0 <= y < self.height):
             self.pixels[x][y] = clr or self.currColor
 
-    def libFinish(self, filename):
+    def glPointvp(self, ndcx, ndcy, clr=None):
+        x = int((ndcx + 1) * (self.vpW /2) + self.vpX)
+        y = int((ndcy + 1) * (self.vpH /2) + self.vpY)
+
+        self.glPoint(x, y, clr)
+
+
+    def glFinish(self, filename): 
         with open(filename, "wb") as file:
             # Header
             file.write(bytes('B'.encode('ascii')))
