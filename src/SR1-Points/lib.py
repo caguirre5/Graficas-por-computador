@@ -23,15 +23,24 @@ def color(b, g, r):
 
 class Renderer(object):
     def __init__(self, width, height): 
-        self.width = width
-        self.height = height
+        self.glInit (width, height)
+
+    def glInit(self, width, height):
+        self.glCreateWindow(width, height)
 
         self.clearColor = color(0, 0, 0)
-        self.currColor = color(1, 1, 1)
+        self.currColor = color(0, 0, 0)
 
         self.glViewport(0,0,self.width, self.height)
 
         self.glClear()
+
+
+    def glCreateWindow(self, width, height):
+        self.width = width
+        self.height = height
+
+
 
     def glViewport(self, posX, posY, width, height):
         self.vpX = posX
