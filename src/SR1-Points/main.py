@@ -100,6 +100,11 @@ rend = Renderer(width, height)
 
 v0 = V2(width/2, height/2)
 v1 = V2(width, height/2)
-v1 = V2(width, height)
+v2 = V2(width, height)
+
+rend.glLine(v0, v1)
+rend.glLine(v0, v1)
+rend.glLine(v0, v1)
+rend.glLine(v0, v1)
 
 rend.glFinish("starfield.bmp")
