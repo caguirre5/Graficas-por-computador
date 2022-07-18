@@ -1,8 +1,8 @@
 from lib import Renderer, color, V2
 import random
 
-width = 512
-height = 512
+width = 1024
+height = 1024
 rend = Renderer(width, height)
 
 # rend.glClearColor(1,0,0)
@@ -25,6 +25,11 @@ rend = Renderer(width, height)
 #     slope = 1
 #     y = slope * x
 #     rend.glPoint(x,y)
+
+
+# -----------------------------------------------------------------------------
+#           Renderizacion de espacio con estrellas
+# -----------------------------------------------------------------------------
 
 # StarField
 # for x in range(width):
@@ -89,6 +94,11 @@ rend = Renderer(width, height)
 #                rend.glPoint(x+1,y-3, starColor)
 #                rend.glPoint(x+1,y+5, starColor)
 
+
+# -----------------------------------------------------------------------------
+#           Renderizacion de punto dentro de un viewport
+# -----------------------------------------------------------------------------
+
 # rend.glViewport(int(width / 4), int(height /4), int(width/2), int(height/2))
 
 # rend.glClearColor(0,1,0)
@@ -98,13 +108,34 @@ rend = Renderer(width, height)
 # rend.glPointvp(0,0)
 
 
-v0 = V2(width/2, height/2)
-v1 = V2(width, height/2)
-v2 = V2(width, height)
+# -----------------------------------------------------------------------------
+#               Linea con pendiente
+# -----------------------------------------------------------------------------
 
-rend.glLine(v0, v1)
-rend.glLine(v0, v1)
-rend.glLine(v0, v1)
-rend.glLine(v0, v1)
+# m = -0.5
+# b = height / 2
 
-rend.glFinish("starfield.bmp")
+# for x in range(width):
+#     y = int(m * x + b)
+#     rend.glPoint(x, y)
+
+# -----------------------------------------------------------------------------
+#               Algoritmo de Bresenham
+# -----------------------------------------------------------------------------
+
+steps = 100
+
+dy = height / steps
+dx = width / steps
+
+x = 0
+y = height
+for i in range(steps):
+    rend.glLine(V2(x, 0), V2(0, y))
+    rend.glLine(V2(x, 0), V2(width, height - y))
+    rend.glLine(V2(width - x, height), V2(0, y))
+    rend.glLine(V2(width - x, height), V2(width, height - y))
+    x += dx
+    y -= dy
+
+rend.glFinish("output.bmp")
