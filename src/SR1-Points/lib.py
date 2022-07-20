@@ -45,8 +45,9 @@ class Renderer(object):
         self.vpW = width
         self.vpH = height
 
-    def glClear(self):  # List comprehension: Asigna color a cada posicion 
-        self.pixels = [[self.clearColor for y in range(self.height)] for x in range(self.width)]
+    def glClear(self):  # List comprehension: Asigna color a cada posicion
+        self.pixels = [[self.clearColor for y in range(
+            self.height)] for x in range(self.width)]
 
     def glClearColor(self, r, g, b):
         self.clearColor = color(r, g, b)
@@ -68,7 +69,6 @@ class Renderer(object):
         y = int((ndcy + 1) * (self.vpH / 2) + self.vpY)
 
         self.glPoint(x, y, clr)
-
 
     def glLine(self, v0, v1, clr=None):
         # Bresenham line algorithm
@@ -128,7 +128,10 @@ class Renderer(object):
 
                 limit += 1
 
-    
+    def glFill(self, poligono):
+        for y in range(self.height):
+            for x in range(self.width):
+                print('se está recorriendo la imagen')
 
     def glFinish(self, filename):
         with open(filename, "wb") as file:
