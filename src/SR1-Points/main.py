@@ -5,9 +5,9 @@ width = 1024
 height = 1024
 rend = Renderer(width, height)
 
-# rend.glClearColor(1,0,0)
-# rend.glColor(1,1,0)
-# rend.glClear()
+rend.glClearColor(1,0,0)
+rend.glColor(1,1,0)
+rend.glClear()
 
 # for x in range(width):
 #     for y in range(height):
@@ -123,19 +123,5 @@ rend = Renderer(width, height)
 #               Algoritmo de Bresenham
 # -----------------------------------------------------------------------------
 
-steps = 100
-
-dy = height / steps
-dx = width / steps
-
-x = 0
-y = height
-for i in range(steps):
-    rend.glLine(V2(x, 0), V2(0, y))
-    rend.glLine(V2(x, 0), V2(width, height - y))
-    rend.glLine(V2(width - x, height), V2(0, y))
-    rend.glLine(V2(width - x, height), V2(width, height - y))
-    x += dx
-    y -= dy
 
 rend.glFinish("output.bmp")
