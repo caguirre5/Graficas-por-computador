@@ -2,9 +2,12 @@ from lib import Renderer, color, V2
 import random
 
 width = 1024
-height = 1024
+height = 512
 
 rend = Renderer(width, height)
+rend.glClearColor(1, 0, 0)
+rend.glColor(1, 1, 0)
+rend.glClear()
 
 pol1 = [V2(165, 380), V2(185, 360), V2(180, 330), V2(207, 345), V2(233, 330), V2(
     230, 360), V2(250, 380), V2(220, 385), V2(205, 410), V2(193, 383)]
@@ -30,5 +33,10 @@ draw(pol5, color(0, 1, 0))
 # Rellenado de poligonos
 # ------------------------
 
+rend.glFill(pol1, color(0, 1, 0))
+rend.glFill(pol2, color(1, 1, 0))
+rend.glFill(pol3, color(0.8, 0.1, 0.5))
+rend.glFill(pol4, color(0.3, 0.7, 0))
+rend.glFill(pol5, color(1, 0, 0))
 
-rend.glFinish("output.bmp")
+rend.glFinish("Lab1-FillinAnyPolygon.bmp")

@@ -128,10 +128,20 @@ class Renderer(object):
 
                 limit += 1
 
-    def glFill(self, poligono):
+    def glFill(self, poligono, clr=None):
         for y in range(self.height):
             for x in range(self.width):
-                print('se está recorriendo la imagen')
+                last = len(poligono) - 1
+                check = False
+
+                # Este algoritmo verifica los puntos que no estan dentro del poligono
+                for i in range(len(poligono)):
+                    if (poligono[i][1] < y and poligono[last][1] >= y) or (poligono[last][1] < y and poligono[i][1] >= y):
+                        if poligono[i][0] + (y - poligono[i][1]) / (poligono[last][1] - poligono[i][1]) * (poligono[last][0] - poligono[i][0]) < x:
+                            check = not check
+                    last = i
+                if check:
+                    self.glPoint(x, y, clr)
 
     def glFinish(self, filename):
         with open(filename, "wb") as file:
