@@ -2,7 +2,7 @@ import struct
 from collections import namedtuple
 import numpy as np
 import random
-
+from math import cos, sin, pi
 from obj import Obj
 
 V2 = namedtuple('Point2', ['x', 'y'])
@@ -32,6 +32,22 @@ def color(b, g, r):
          int(r * 255)]
     )
 
+def baryCoords(A, B, C, P):
+
+    # || PB X PC ||
+    areaPBC = (B.y - C.y) * (P.x - C.x) + (C.x - B.x) * (P.y - C.y)
+    areaPAC = (C.y - A.y) * (P.x - C.x) + (A.x - C.x) * (P.y - C.y)
+    areaABC = (B.y - C.y) * (A.x - C.x) + (C.x - B.x) * (A.y - C.y)
+
+    #PBC / ABC
+    u = areaPBC / areaABC
+
+    #PAC / ABC
+    v = areaPAC / areaABC
+
+    # 1 - U - V
+    w = 1 - u - v
+    return u,v,w
 
 class Renderer(object):
     def __init__(self, width, height):
@@ -53,6 +69,9 @@ class Renderer(object):
 
     def glClear(self):  # List comprehension: Asigna color a cada posicion
         self.pixels = [[self.clearColor for y in range(
+            self.height)] for x in range(self.width)]
+
+        self.zbuffer = [[float('inf') for y in range(
             self.height)] for x in range(self.width)]
 
     def glClearColor(self, r, g, b):
@@ -134,6 +153,36 @@ class Renderer(object):
 
                 limit += 1
 
+    def glTriangle2(self, A,B,C,clr=None):
+        #Baricentric coordenates
+
+        # colorA = (1,0,0)
+        # colorB = (0,1,0)
+        # colorC = (0,0,1)
+        
+        # bounding box
+        minX = round(min(A.x, B.x, C.x))
+        maxX = round(max(A.x, B.x, C.x))
+        minY = round(min(A.y, B.y, C.y))
+        maxY = round(max(A.y, B.y, C.y))
+
+        for x in range(minX, maxX + 1):
+            for y in range(minY, maxY + 1):
+                u, v, w = baryCoords(A,B,C, V2(x, y))
+
+                if 0<=u<=1 and 0<=v<=1 and 0 <= w <=1:
+                    # colorP = color(
+                    #                 colorA[0]*u + colorB[0] * v + colorC[0] * w,
+                    #                 colorA[1]*u + colorB[1] * v + colorC[1] * w,
+                    #                 colorA[2]*u + colorB[2] * v + colorC[2] * w)
+
+
+                    z = A.z * u + B.z * v + C.z * w
+                    if z < self.zbuffer[x][y]:
+                        self.zbuffer[x][y] = z
+                        newColor = color(z/1000, z-1000, z/1000)
+                        self.glPoint(x,y,clr) 
+
     def glTriangle(self, A, B, C, clr=None):
 
         # ScanLine Algorithm
@@ -204,14 +253,27 @@ class Renderer(object):
                 if check:
                     self.glPoint(x, y, clr)
 
+    def glCreateRotationMatrix(self, pitch, yaw, roll,):
+        pitch *= pi/180
+        yaw *= pi/180
+        roll *= pi/180
+        pitchMat = np.matrix([[1, 0, 0, 0],[0, cos(pitch), -sin(pitch), 0],[0, sin(pitch), cos(pitch), 0],[0, 0, 0, 1]])
+
+        yawMat = np.matrix([[cos(yaw), 0, sin(yaw), 0],[0, 1, 0, 0],[-sin(yaw), 0, cos(yaw), 0],[0, 0, 0, 1]])
+
+        rollMat = np.matrix([[cos(roll), -sin(roll), 0, 0],[sin(roll), cos(roll), 0, 0],[0, 0, 1, 0],[0, 0, 0, 1]])
+
+        return pitchMat, yawMat, rollMat
+
     def glCreateObjectMatrix(self, translate=V3(0, 0, 0), rotate=V3(0, 0, 0), scale=V3(1, 1, 1)):
+        
 
         translation = np.matrix([[1, 0, 0, translate.x],
                                  [0, 1, 0, translate.y],
                                  [0, 0, 1, translate.z],
                                  [0, 0, 0, 1]])
 
-        rotation = np.identity(4)
+        rotation = self.glCreateRotationMatrix(rotate.x, rotate.y, rotate.z)
 
         scaleMat = np.matrix([[scale.x, 0, 0, 0],
                               [0, scale.y, 0, 0],
@@ -246,7 +308,7 @@ class Renderer(object):
             v1 = self.glTransform(v1, modelMatrix)
             v2 = self.glTransform(v2, modelMatrix)
 
-            self.glTriangle(v0, v1, v2, color(random.random(),
+            self.glTriangle2(v0, v1, v2, color(random.random(),
                                               random.random(),
                                               random.random()))
 

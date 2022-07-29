@@ -5,8 +5,9 @@ height = 540
 
 rend = Renderer(width, height)
 
-rend.glLoadModel("cat.obj",
-                 translate=V3(width/2, height/2, 0),
+rend.glLoadModel("model.obj",
+                 translate=V3(width/2, height/2, 50),
+                 rotate = V3(0,180,45),
                  scale=V3(200, 200, 200))
 
 rend.glFinish("output.bmp")
