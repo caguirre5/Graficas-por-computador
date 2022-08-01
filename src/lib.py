@@ -32,6 +32,7 @@ def color(b, g, r):
          int(r * 255)]
     )
 
+
 def baryCoords(A, B, C, P):
 
     # || PB X PC ||
@@ -47,7 +48,8 @@ def baryCoords(A, B, C, P):
 
     # 1 - U - V
     w = 1 - u - v
-    return u,v,w
+    return u, v, w
+
 
 class Renderer(object):
     def __init__(self, width, height):
@@ -153,13 +155,13 @@ class Renderer(object):
 
                 limit += 1
 
-    def glTriangle2(self, A,B,C,clr=None):
-        #Baricentric coordenates
+    def glTriangle2(self, A, B, C, clr=None):
+        # Baricentric coordenates
 
         # colorA = (1,0,0)
         # colorB = (0,1,0)
         # colorC = (0,0,1)
-        
+
         # bounding box
         minX = round(min(A.x, B.x, C.x))
         maxX = round(max(A.x, B.x, C.x))
@@ -168,20 +170,19 @@ class Renderer(object):
 
         for x in range(minX, maxX + 1):
             for y in range(minY, maxY + 1):
-                u, v, w = baryCoords(A,B,C, V2(x, y))
+                u, v, w = baryCoords(A, B, C, V2(x, y))
 
-                if 0<=u<=1 and 0<=v<=1 and 0 <= w <=1:
+                if 0 <= u <= 1 and 0 <= v <= 1 and 0 <= w <= 1:
                     # colorP = color(
                     #                 colorA[0]*u + colorB[0] * v + colorC[0] * w,
                     #                 colorA[1]*u + colorB[1] * v + colorC[1] * w,
                     #                 colorA[2]*u + colorB[2] * v + colorC[2] * w)
 
-
-                    z = A.z * u + B.z * v + C.z * w
-                    if z < self.zbuffer[x][y]:
-                        self.zbuffer[x][y] = z
-                        newColor = color(z/1000, z-1000, z/1000)
-                        self.glPoint(x,y,clr) 
+                    # z = A.z * u + B.z * v + C.z * w
+                    # if z < self.zbuffer[x][y]:
+                    #     self.zbuffer[x][y] = z
+                    # newColor = color(z/1000, z-1000, z/1000)
+                    self.glPoint(x, y, clr)
 
     def glTriangle(self, A, B, C, clr=None):
 
@@ -257,23 +258,27 @@ class Renderer(object):
         pitch *= pi/180
         yaw *= pi/180
         roll *= pi/180
-        pitchMat = np.matrix([[1, 0, 0, 0],[0, cos(pitch), -sin(pitch), 0],[0, sin(pitch), cos(pitch), 0],[0, 0, 0, 1]])
+        pitchMat = np.matrix([[1, 0, 0, 0],
+                              [0, cos(pitch), -sin(pitch), 0],
+                              [0, sin(pitch), cos(pitch), 0],
+                              [0, 0, 0, 1]])
 
-        yawMat = np.matrix([[cos(yaw), 0, sin(yaw), 0],[0, 1, 0, 0],[-sin(yaw), 0, cos(yaw), 0],[0, 0, 0, 1]])
+        yawMat = np.matrix([[cos(yaw), 0, sin(yaw), 0], [
+                           0, 1, 0, 0], [-sin(yaw), 0, cos(yaw), 0], [0, 0, 0, 1]])
 
-        rollMat = np.matrix([[cos(roll), -sin(roll), 0, 0],[sin(roll), cos(roll), 0, 0],[0, 0, 1, 0],[0, 0, 0, 1]])
+        rollMat = np.matrix([[cos(roll), -sin(roll), 0, 0],
+                            [sin(roll), cos(roll), 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
 
-        return pitchMat, yawMat, rollMat
+        return pitchMat * yawMat * rollMat
 
     def glCreateObjectMatrix(self, translate=V3(0, 0, 0), rotate=V3(0, 0, 0), scale=V3(1, 1, 1)):
-        
 
         translation = np.matrix([[1, 0, 0, translate.x],
                                  [0, 1, 0, translate.y],
                                  [0, 0, 1, translate.z],
                                  [0, 0, 0, 1]])
 
-        rotation = self.glCreateRotationMatrix(rotate.x, rotate.y, rotate.z)
+        rotation = np.identity(4)
 
         scaleMat = np.matrix([[scale.x, 0, 0, 0],
                               [0, scale.y, 0, 0],
@@ -309,8 +314,8 @@ class Renderer(object):
             v2 = self.glTransform(v2, modelMatrix)
 
             self.glTriangle2(v0, v1, v2, color(random.random(),
-                                              random.random(),
-                                              random.random()))
+                                               random.random(),
+                                               random.random()))
 
     def glFinish(self, filename):
         with open(filename, "wb") as file:
