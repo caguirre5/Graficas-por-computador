@@ -5,8 +5,8 @@ width = 1024
 height = 1024
 rend = Renderer(width, height)
 
-rend.glClearColor(1,0,0)
-rend.glColor(1,1,0)
+rend.glClearColor(1, 0, 0)
+rend.glColor(1, 1, 0)
 rend.glClear()
 
 # for x in range(width):
