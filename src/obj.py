@@ -14,21 +14,20 @@ class Obj(object):
             except:
                 continue
 
-            if prefix == 'v': # Vertices
-                self.vertices.append( list(map(float,value.split(' '))))
+            if prefix == 'v':  # Vertices
+                self.vertices.append(list(map(float, value.split(' '))))
             elif prefix == 'vt':
-                self.texcoords.append( list(map(float, value.split(' '))))
+                self.texcoords.append(list(map(float, value.split(' '))))
             elif prefix == 'vn':
-                self.normals.append( list(map(float, value.split(' '))))
+                self.normals.append(list(map(float, value.split(' '))))
             elif prefix == 'f':
-                self.faces.append([  list(map(int, vert.split('/'))) for vert in value.split(' ')] )
+                self.faces.append([list(map(int, vert.split('/')))
+                                  for vert in value.split(' ')])
 
                 #vertList = []
-                #for vert in value.split(' '):
+                # for vert in value.split(' '):
                 #    indices = vert.split('/')
                 #    indices = map(int, indices)
                 #    indices = list(indices)
                 #    vertList.append(indices)
-                #self.faces.append(vertList)
-
-       
+                # self.faces.append(vertList)

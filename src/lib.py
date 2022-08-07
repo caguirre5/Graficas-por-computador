@@ -40,15 +40,17 @@ def baryCoords(A, B, C, P):
     areaPAC = (C.y - A.y) * (P.x - C.x) + (A.x - C.x) * (P.y - C.y)
     areaABC = (B.y - C.y) * (A.x - C.x) + (C.x - B.x) * (A.y - C.y)
 
-    #PBC / ABC
-    u = areaPBC / areaABC
-
-    #PAC / ABC
-    v = areaPAC / areaABC
-
-    # 1 - U - V
-    w = 1 - u - v
-    return u, v, w
+    try:
+        # PBC / ABC
+        u = areaPBC / areaABC
+        # PAC / ABC
+        v = areaPAC / areaABC
+        # 1 - u - v
+        w = 1 - u - v
+    except:
+        return -1, -1, -1
+    else:
+        return u, v, w
 
 
 class Renderer(object):
@@ -58,6 +60,11 @@ class Renderer(object):
 
         self.clearColor = color(0, 0, 0)
         self.currColor = color(1, 1, 1)
+
+        self.active_shader = None
+        self.active_texture = None
+
+        self.dirLight = V3(0, 0, 1)
 
         self.glViewport(0, 0, self.width, self.height)
 
@@ -155,12 +162,7 @@ class Renderer(object):
 
                 limit += 1
 
-    def glTriangle2(self, A, B, C, clr=None):
-        # Baricentric coordenates
-
-        # colorA = (1,0,0)
-        # colorB = (0,1,0)
-        # colorC = (0,0,1)
+    def glTriangle2(self, A, B, C, texCoords=(), normals=(), clr=None):
 
         # bounding box
         minX = round(min(A.x, B.x, C.x))
@@ -168,21 +170,34 @@ class Renderer(object):
         minY = round(min(A.y, B.y, C.y))
         maxY = round(max(A.y, B.y, C.y))
 
+        triangleNormal = np.cross(np.subtract(B, A), np.subtract(C, A))
+        # normalizar
+        triangleNormal = triangleNormal / np.linalg.norm(triangleNormal)
+
         for x in range(minX, maxX + 1):
             for y in range(minY, maxY + 1):
                 u, v, w = baryCoords(A, B, C, V2(x, y))
 
-                if 0 <= u <= 1 and 0 <= v <= 1 and 0 <= w <= 1:
-                    # colorP = color(
-                    #                 colorA[0]*u + colorB[0] * v + colorC[0] * w,
-                    #                 colorA[1]*u + colorB[1] * v + colorC[1] * w,
-                    #                 colorA[2]*u + colorB[2] * v + colorC[2] * w)
+                if 0 <= u and 0 <= v and 0 <= w:
 
-                    # z = A.z * u + B.z * v + C.z * w
-                    # if z < self.zbuffer[x][y]:
-                    #     self.zbuffer[x][y] = z
-                    # newColor = color(z/1000, z-1000, z/1000)
-                    self.glPoint(x, y, clr)
+                    z = A.z * u + B.z * v + C.z * w
+
+                    if 0 <= x < self.width and 0 <= y < self.height:
+                        if z < self.zbuffer[x][y]:
+                            self.zbuffer[x][y] = z
+
+                            if self.active_shader:
+                                r, g, b = self.active_shader(self,
+                                                             baryCoords=(
+                                                                 u, v, w),
+                                                             vColor=clr or self.currColor,
+                                                             texCoords=texCoords,
+                                                             normals=normals,
+                                                             triangleNormal=triangleNormal)
+
+                                self.glPoint(x, y, color(r, g, b))
+                            else:
+                                self.glPoint(x, y, clr)
 
     def glTriangle(self, A, B, C, clr=None):
 
@@ -254,20 +269,25 @@ class Renderer(object):
                 if check:
                     self.glPoint(x, y, clr)
 
-    def glCreateRotationMatrix(self, pitch, yaw, roll,):
+    def glCreateRotationMatrix(self, pitch=0, yaw=0, roll=0):
         pitch *= pi/180
         yaw *= pi/180
         roll *= pi/180
+
         pitchMat = np.matrix([[1, 0, 0, 0],
                               [0, cos(pitch), -sin(pitch), 0],
                               [0, sin(pitch), cos(pitch), 0],
                               [0, 0, 0, 1]])
 
-        yawMat = np.matrix([[cos(yaw), 0, sin(yaw), 0], [
-                           0, 1, 0, 0], [-sin(yaw), 0, cos(yaw), 0], [0, 0, 0, 1]])
+        yawMat = np.matrix([[cos(yaw), 0, sin(yaw), 0],
+                            [0, 1, 0, 0],
+                            [-sin(yaw), 0, cos(yaw), 0],
+                            [0, 0, 0, 1]])
 
         rollMat = np.matrix([[cos(roll), -sin(roll), 0, 0],
-                            [sin(roll), cos(roll), 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
+                             [sin(roll), cos(roll), 0, 0],
+                             [0, 0, 1, 0],
+                             [0, 0, 0, 1]])
 
         return pitchMat * yawMat * rollMat
 
@@ -278,7 +298,7 @@ class Renderer(object):
                                  [0, 0, 1, translate.z],
                                  [0, 0, 0, 1]])
 
-        rotation = np.identity(4)
+        rotation = self.glCreateRotationMatrix(rotate.x, rotate.y, rotate.z)
 
         scaleMat = np.matrix([[scale.x, 0, 0, 0],
                               [0, scale.y, 0, 0],
@@ -313,9 +333,25 @@ class Renderer(object):
             v1 = self.glTransform(v1, modelMatrix)
             v2 = self.glTransform(v2, modelMatrix)
 
-            self.glTriangle2(v0, v1, v2, color(random.random(),
-                                               random.random(),
-                                               random.random()))
+            vt0 = model.texcoords[face[0][1] - 1]
+            vt1 = model.texcoords[face[1][1] - 1]
+            vt2 = model.texcoords[face[2][1] - 1]
+
+            vn0 = model.normals[face[0][2] - 1]
+            vn1 = model.normals[face[1][2] - 1]
+            vn2 = model.normals[face[2][2] - 1]
+
+            self.glTriangle2(v0, v1, v2, texCoords=(
+                vt0, vt1, vt2), normals=(vn0, vn1, vn2))
+
+            if vertCount == 4:
+                v3 = model.vertices[face[3][0] - 1]
+                v3 = self.glTransform(v3, modelMatrix)
+                vt3 = model.texcoords[face[3][1] - 1]
+                vn3 = model.normals[face[3][2] - 1]
+
+                self.glTriangle2(v0, v2, v3, texCoords=(
+                    vt0, vt2, vt3), normals=(vn0, vn2, vn3))
 
     def glFinish(self, filename):
         with open(filename, "wb") as file:
